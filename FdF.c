@@ -6,7 +6,7 @@
 /*   By: jibot <marvin@42.fr>                       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/30 13:35:32 by jibot             #+#    #+#             */
-/*   Updated: 2022/01/06 16:05:52 by jibot            ###   ########.fr       */
+/*   Updated: 2022/01/06 18:12:07 by jibot            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,33 +65,37 @@ int is_grid_seg(int x, int y, t_dot *dot1, t_dot *dot2)
 
 	coeff = ((dot2->y_coord - dot1->y_coord) / (dot2->x_coord - dot1->y_coord));
 	abs_or = dot1->y_coord - coeff * dot1->x_coord;
-	if (x * coeff + abs_or <= y + dot1->thick && x * coeff + abs_or >= y - dot1->thick \
+	if ((x == dot1->x_coord  && dot1->x_coord == dot2->x_coord && y > dot1->y_coord && y < dot2->y_coord)\
+		|| (y == dot1->y_coord && dot1->y_coord == dot2->y_coord && x > dot1->x_coord && x < dot2->x_coord))
+		return (1);
+	else if (x * coeff + abs_or <= y + dot1->thick && x * coeff + abs_or >= y - dot1->thick \
 		&& x > dot1->x_coord && x < dot2->x_coord \
 		&& y > dot1->y_coord && y < dot2->y_coord)
 		return (1);
 	return (0);
 }
 
-void	ft_draw_line(t_data img, t_dot *dot1, t_dot *dot2, int color)
+t_data	ft_draw_line(t_data *img, t_dot dot1, t_dot dot2, int color)
 {
 	int x;
 	int y;
 
-	x = dot1->x_coord;
-	while (x <= dot2->x_coord)
+	x = dot1.x_coord;
+	while (x <= dot2.x_coord)
 	{
-		y = dot1->y_coord;
-		while (y <= dot2->y_coord)
+		y = dot1.y_coord;
+		while (y <= dot2.y_coord)
 		{
-			if (is_grid_seg(x, y, dot1, dot2))
-				ft_mlx_pixput(&img, x, y, color);
+			if (is_grid_seg(x, y, &dot1, &dot2))
+				ft_mlx_pixput(img, x, y, color);
 			y++;
 		}
 		x++;
 	}
+	return (*img);
 }
 
-t_dot	get_file_data(int fd)
+/*t_dot	get_file_data(int fd)
 {
 	static char		*doc_line;
 	static int		ycount;
@@ -115,22 +119,36 @@ t_dot	get_file_data(int fd)
 	dot.height = doc_line[i] - 48;
 	dot.thick = 1;
 	return (dot);
-}
+}*/
 
-t_data	ft_draw_grid(t_data img, int fd)
+t_data	ft_draw_grid(t_data *img, int fd)
 {
 	t_dot	temp_dot1;
 	t_dot	temp_dot2;
-	
-	while (temp_dot1.y_coord != 0)
+	char	*buffer;
+	int		i;
+	int		ycount;
+
+	i = 0;
+	ycount = 1;
+	buffer = get_next_line(fd);
+	while (buffer)
 	{
-		temp_dot1 = get_file_data(fd);
-		printf("%d %d %d\n", temp_dot1.x_coord, temp_dot1.y_coord, temp_dot1.height);
-		temp_dot2 = get_file_data(fd);
-		printf("%d %d %d\n", temp_dot1.x_coord, temp_dot1.y_coord, temp_dot1.height);
-		ft_draw_line(img, &temp_dot1, &temp_dot2, 0x00FFFFFF);
+		while (buffer[i])
+		{
+			temp_dot1.x_coord = 50 * (i + 1);
+			temp_dot1.y_coord = 50 * ycount;
+			temp_dot1.height = buffer[i] - 48;
+			temp_dot2.x_coord = 50 * (i + 2);
+			temp_dot2.y_coord = 50 * ycount;
+			temp_dot2.height = buffer[i + 1] - 48;
+			*img = ft_draw_line(img, temp_dot1, temp_dot2, 0x00FFFFFF);
+			i++;
+		}
+		buffer = get_next_line(fd);
+		ycount++;
 	}
-	return (img);
+	return (*img);
 }
 
 int	ft_render(t_vars *vars)
@@ -139,17 +157,17 @@ int	ft_render(t_vars *vars)
 	/*t_dot	dot1;
 	t_dot	dot2;
 
-	dot1.x_coord = 10;
-	dot1.y_coord = 10;
+	dot1.x_coord = 100;
+	dot1.y_coord = 500;
 	dot2.x_coord = 400;
-	dot2.y_coord = 800;
+	dot2.y_coord = 500;
 	dot1.thick = 1;*/
 
 	int fd = open("42.fdf", O_RDONLY);
 	img.img = mlx_new_image(vars->mlx, vars->win_width, vars->win_height);
 	img.addr = mlx_get_data_addr(img.img, &img.bpp, &img.l_len, &img.endian);
 	//ft_draw_line(img, &dot1, &dot2, 0x00FFFFFF);
-	img = ft_draw_grid(img, fd);
+	img = ft_draw_grid(&img, fd);
 	mlx_put_image_to_window(vars->mlx, vars->win, img.img, 0, 0);
 	return (1);
 }
@@ -159,15 +177,13 @@ int	main(int argc, char **argv)
 	(void) argc;
 	(void) argv;
 	t_vars	vars;
-	//t_data	img;
-
+	//debug();
 	vars.mlx = mlx_init();
 	vars.win_width = 1200;
 	vars.win_height = 1000;
 	vars.win = mlx_new_window(vars.mlx, vars.win_width, vars.win_height, "FdF test");
-	//img.img = mlx_new_image(vars.mlx, vars.win_width, vars.win_height);
-	//img.addr = mlx_get_data_addr(img.img, &img.bpp, &img.l_len, &img.endian);
 	//mlx_hook(vars.win, 2, 0, ft_event_handle, &vars);
-	mlx_loop_hook(vars.mlx, ft_render, &vars);
+	//mlx_loop_hook(vars.mlx, ft_render, &vars);
+	ft_render(&vars);
 	mlx_loop(vars.mlx);
 }
