@@ -6,13 +6,14 @@
 /*   By: jibot <marvin@42.fr>                       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/30 13:35:32 by jibot             #+#    #+#             */
-/*   Updated: 2022/01/05 21:28:46 by jibot            ###   ########.fr       */
+/*   Updated: 2022/01/06 16:05:52 by jibot            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <mlx.h>
 #include <stdio.h>
 #include "./libft/libft.h"
+#include "get_next_line.h"
 
 typedef struct s_data {
 	void	*img;
@@ -25,16 +26,18 @@ typedef struct s_data {
 typedef struct s_vars {
 	void	*mlx;
 	void	*win;
-	int x_center;
-	int y_center;
-	int radius;
-	int thick;
+	int margin;
+	int win_width;
+	int win_height;
 	int move;
 }	t_vars;
 
-int	ft_render(t_vars *vars);
-
-t_data	ft_draw_circle(t_vars *circle, t_data img);
+typedef struct s_dot {
+	int x_coord;
+	int y_coord;
+	int thick;
+	int height;
+}	t_dot;
 
 void	ft_mlx_pixput(t_data *data, int x, int y, int color)
 {
@@ -44,45 +47,88 @@ void	ft_mlx_pixput(t_data *data, int x, int y, int color)
 	*(unsigned int*)dst = color;
 }
 
-int	ft_is_circle(int x, int y, t_vars *circle)
-{
-	int sqr_sum;
-
-	sqr_sum = ft_pwr(x - circle->x_center, 2) + ft_pwr(y - circle->y_center, 2);
-	if (sqr_sum > ft_pwr(circle->radius, 2) - circle->thick \
-		&& sqr_sum < ft_pwr(circle->radius, 2) + circle->thick)
-		return (1);
-	return (0);
-}
-
-int	ft_key_handle(int keycode, t_vars *vars)
+int	ft_event_handle(int keycode, t_vars *vars)
 {
 	if (keycode == 0)
-		vars->move = 1;
+		vars->move -= 2;
 	else if (keycode == 2)
-   		vars->move = -1;
+   		vars->move += 2;
 	else if (keycode == 53)
 		mlx_destroy_window(vars->mlx, vars->win);
 	return (keycode);
 }
 
-t_data	ft_draw_circle(t_vars *circle, t_data img)
+int is_grid_seg(int x, int y, t_dot *dot1, t_dot *dot2)
+{
+	float coeff;
+	int abs_or;
+
+	coeff = ((dot2->y_coord - dot1->y_coord) / (dot2->x_coord - dot1->y_coord));
+	abs_or = dot1->y_coord - coeff * dot1->x_coord;
+	if (x * coeff + abs_or <= y + dot1->thick && x * coeff + abs_or >= y - dot1->thick \
+		&& x > dot1->x_coord && x < dot2->x_coord \
+		&& y > dot1->y_coord && y < dot2->y_coord)
+		return (1);
+	return (0);
+}
+
+void	ft_draw_line(t_data img, t_dot *dot1, t_dot *dot2, int color)
 {
 	int x;
 	int y;
 
-	circle->x_center += circle->move;
-	x = 0;
-	while (x < 1000)
+	x = dot1->x_coord;
+	while (x <= dot2->x_coord)
 	{
-		y = 0;
-		while (y < 1000)
+		y = dot1->y_coord;
+		while (y <= dot2->y_coord)
 		{
-			if (ft_is_circle(x, y, circle))
-				ft_mlx_pixput(&img, x, y, 0x00F0F000);
+			if (is_grid_seg(x, y, dot1, dot2))
+				ft_mlx_pixput(&img, x, y, color);
 			y++;
 		}
 		x++;
+	}
+}
+
+t_dot	get_file_data(int fd)
+{
+	static char		*doc_line;
+	static int		ycount;
+	static int		i;
+	t_dot			dot;
+	t_dot			empty;
+	
+	empty.y_coord = 0;
+	if (doc_line[i] == '\n' || ycount == 0)
+	{
+		doc_line = get_next_line(fd);
+		printf("%s\n", doc_line);
+		if (!doc_line)
+			return (empty);
+		i = 0;
+		ycount++;
+	}
+	dot.x_coord = i + 1;
+	i++;
+	dot.y_coord = ycount;
+	dot.height = doc_line[i] - 48;
+	dot.thick = 1;
+	return (dot);
+}
+
+t_data	ft_draw_grid(t_data img, int fd)
+{
+	t_dot	temp_dot1;
+	t_dot	temp_dot2;
+	
+	while (temp_dot1.y_coord != 0)
+	{
+		temp_dot1 = get_file_data(fd);
+		printf("%d %d %d\n", temp_dot1.x_coord, temp_dot1.y_coord, temp_dot1.height);
+		temp_dot2 = get_file_data(fd);
+		printf("%d %d %d\n", temp_dot1.x_coord, temp_dot1.y_coord, temp_dot1.height);
+		ft_draw_line(img, &temp_dot1, &temp_dot2, 0x00FFFFFF);
 	}
 	return (img);
 }
@@ -90,10 +136,20 @@ t_data	ft_draw_circle(t_vars *circle, t_data img)
 int	ft_render(t_vars *vars)
 {
 	t_data	img;
+	/*t_dot	dot1;
+	t_dot	dot2;
 
-	img.img = mlx_new_image(vars->mlx, 1000, 1000);
+	dot1.x_coord = 10;
+	dot1.y_coord = 10;
+	dot2.x_coord = 400;
+	dot2.y_coord = 800;
+	dot1.thick = 1;*/
+
+	int fd = open("42.fdf", O_RDONLY);
+	img.img = mlx_new_image(vars->mlx, vars->win_width, vars->win_height);
 	img.addr = mlx_get_data_addr(img.img, &img.bpp, &img.l_len, &img.endian);
-	ft_draw_circle(vars, img);
+	//ft_draw_line(img, &dot1, &dot2, 0x00FFFFFF);
+	img = ft_draw_grid(img, fd);
 	mlx_put_image_to_window(vars->mlx, vars->win, img.img, 0, 0);
 	return (1);
 }
@@ -101,18 +157,17 @@ int	ft_render(t_vars *vars)
 int	main(int argc, char **argv)
 {
 	(void) argc;
-	static t_vars	vars;
-	t_data	img;
+	(void) argv;
+	t_vars	vars;
+	//t_data	img;
 
-	vars.x_center = ft_atoi(argv[1]);
-	vars.y_center = ft_atoi(argv[2]);
-	vars.radius = ft_atoi(argv[3]);
-	vars.thick = ft_atoi(argv[4]);
 	vars.mlx = mlx_init();
-	vars.win = mlx_new_window(vars.mlx, 1000, 1000, "testwin");
-	img.img = mlx_new_image(vars.mlx, 1000, 1000);
-	img.addr = mlx_get_data_addr(img.img, &img.bpp, &img.l_len, &img.endian);
-	mlx_hook(vars.win, 2, 0, ft_key_handle, &vars);
+	vars.win_width = 1200;
+	vars.win_height = 1000;
+	vars.win = mlx_new_window(vars.mlx, vars.win_width, vars.win_height, "FdF test");
+	//img.img = mlx_new_image(vars.mlx, vars.win_width, vars.win_height);
+	//img.addr = mlx_get_data_addr(img.img, &img.bpp, &img.l_len, &img.endian);
+	//mlx_hook(vars.win, 2, 0, ft_event_handle, &vars);
 	mlx_loop_hook(vars.mlx, ft_render, &vars);
 	mlx_loop(vars.mlx);
 }
