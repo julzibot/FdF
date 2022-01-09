@@ -6,7 +6,7 @@
 #    By: jibot <marvin@42.fr>                       +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2021/10/19 19:19:15 by jibot             #+#    #+#              #
-#    Updated: 2022/01/06 15:54:41 by jibot            ###   ########.fr        #
+#    Updated: 2022/01/09 13:05:03 by jibot            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -18,7 +18,7 @@ RM		= rm -f
 
 CFLAGS	= -Wall -Werror -Wextra -D BUFFER_SIZE=42
 
-SRCS	= FdF.c get_next_line.c get_next_line_utils.c ./libft/ft_isdigit.c ./libft/ft_pwr.c ./libft/ft_sqrt.c ./libft/ft_atoi.c
+SRCS	= FdF.c ./libft/ft_calloc.c ./libft/ft_split.c get_next_line.c get_next_line_utils.c ./libft/ft_isdigit.c ./libft/ft_pwr.c ./libft/ft_sqrt.c ./libft/ft_atoi.c
 
 OBJS	= ${SRCS:.c=.o}
 

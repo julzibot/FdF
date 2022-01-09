@@ -6,7 +6,7 @@
 /*   By: jibot <marvin@42.fr>                       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/30 13:35:32 by jibot             #+#    #+#             */
-/*   Updated: 2022/01/07 18:46:12 by jibot            ###   ########.fr       */
+/*   Updated: 2022/01/09 17:38:25 by jibot            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,11 +33,32 @@ typedef struct s_vars {
 }	t_vars;
 
 typedef struct s_dot {
-	int x_coord;
-	int y_coord;
+	float x_coord;
+	float y_coord;
 	int thick;
 	int height;
 }	t_dot;
+
+float	v_abs(float a)
+{
+	if (a < 0)
+		return (-a);
+	return (a);
+}
+
+float	ft_min(float a, float b)
+{
+	if (a <= b)
+		return (a);
+	return (b);
+}
+
+float	ft_max(float a, float b)
+{
+	if (a >= b)
+		return (a);
+	return (b);
+}
 
 void	ft_mlx_pixput(t_data *data, int x, int y, int color)
 {
@@ -60,32 +81,60 @@ int	ft_event_handle(int keycode, t_vars *vars)
 
 int is_grid_seg(int x, int y, t_dot *dot1, t_dot *dot2)
 {
-	float coeff;
-	float abs_or;
+	float	coeff;
+	float	abs_or;
+	float	x_max;
+	float	y_max;
 
-	if ((x == dot1->x_coord  && dot1->x_coord == dot2->x_coord && y >= dot1->y_coord && y <= dot2->y_coord)
-		|| (y == dot1->y_coord && dot1->y_coord == dot2->y_coord && x >= dot1->x_coord && x <= dot2->x_coord))
+	x_max = ft_max(dot1->x_coord, dot2->x_coord);
+	y_max = ft_max(dot1->y_coord, dot2->y_coord);
+	if ((x == dot1->x_coord  && dot1->x_coord == dot2->x_coord && y >= ft_min(dot1->y_coord, dot2->y_coord) && y <= y_max)
+		|| (y == dot1->y_coord && dot1->y_coord == dot2->y_coord && x >= ft_min(dot1->x_coord, dot2->x_coord) && x <= x_max))
 		return (1);
-	else
-		coeff = ((dot2->y_coord - dot1->y_coord) / (dot2->x_coord - dot1->x_coord));
-		abs_or = dot1->y_coord - coeff * dot1->x_coord;
+	coeff = ((dot2->y_coord - dot1->y_coord) / (dot2->x_coord - dot1->x_coord));
+	abs_or = dot1->y_coord - coeff * dot1->x_coord;
 	if (x * coeff + abs_or <= y + dot1->thick && x * coeff + abs_or >= y - dot1->thick 
-		&& x >= dot1->x_coord && x <= dot2->x_coord 
-		&& y >= dot1->y_coord && y <= dot2->y_coord)
+		&& x >= ft_min(dot1->x_coord, dot2->x_coord) && x <= x_max 
+		&& y >= ft_min(dot1->y_coord, dot2->y_coord) && y <= y_max)
 		return (1);
 	return (0);
 }
 
+//sqrt(3/4) = 0.866
+t_dot	*iso_coord(t_dot *dot)
+{
+	float	x;
+	float	y;
+
+	x = dot->x_coord;
+	y = dot->y_coord;
+	dot->x_coord = 0.866 * x - 0.866 * y;
+	dot->y_coord = 0.500 * x + 0.500 * y;
+	return (dot);
+}
+
+t_dot	*norm_coord(t_dot *dot)
+{
+	float	x;
+	float	y;
+
+	x = dot->x_coord;
+	y = dot->y_coord;
+	dot->x_coord = 0.500 * (x / 0.866 + y / 0.500);
+	dot->y_coord = 0.500 * (y / 0.500 - x / 0.866);
+	return (dot);
+}
+
 t_data	ft_draw_line(t_data *img, t_dot *dot1, t_dot *dot2, int color)
 {
-	int x;
-	int y;
+	float x;
+	float y;
 
-	x = dot1->x_coord;
-	while (x <= dot2->x_coord)
+	x = ft_min(dot1->x_coord, dot2->x_coord);
+	while (x <= ft_max(dot1->x_coord, dot2->x_coord) + 1)
 	{
-		y = dot1->y_coord;
-		while (y <= dot2->y_coord)
+		y = ft_min(dot1->y_coord, dot2->y_coord);
+		while (y <= ft_max(dot1->y_coord, dot2->y_coord) + 1)
 		{
 			if (is_grid_seg(x, y, dot1, dot2))
 				ft_mlx_pixput(img, x, y, color);
@@ -133,22 +182,29 @@ t_data	ft_draw_grid(t_data *img, int fd)
 		prev_data = ft_tabdup(line_data);
 		while (line_data[i])
 		{
-			temp_dot1.x_coord = 30 * (i + 1) + img->margin;
-			temp_dot1.y_coord = 30 * ycount + 5 * img->margin;
+			temp_dot1.x_coord = 25 * (i + 1) + 11 *img->margin;
+			temp_dot1.y_coord = 25 * ycount + img->margin;
 			temp_dot1.height = ft_atoi(line_data[i]);
+			temp_dot1.thick = 1;
 			if (line_data[i + 1])
 			{
-				temp_dot2.x_coord = 30 * (i + 2) + img->margin;
-				temp_dot2.y_coord = 30 * ycount + 5 * img->margin;
+				temp_dot2.x_coord = 25 * (i + 2) + 11 * img->margin;
+				temp_dot2.y_coord = 25 * ycount + img->margin;
 				temp_dot2.height = ft_atoi(line_data[i + 1]);
 			}
-			ft_draw_line(img, &temp_dot1, &temp_dot2, 0x00FFFFFF);
+			else
+				temp_dot2 = temp_dot1;
+			ft_draw_line(img, iso_coord(&temp_dot1), iso_coord(&temp_dot2), 0x00FFFFFF);
 			if (ycount > 0)
 			{
-				temp_dot2.x_coord = temp_dot1.x_coord;
-				temp_dot2.y_coord = temp_dot1.y_coord - (30 * ycount);
+				temp_dot1 = *norm_coord(&temp_dot1);
+				printf("%f\n", temp_dot1.x_coord); 
+				printf("%f\n", temp_dot1.y_coord); 
+				temp_dot2 = temp_dot1;
+				temp_dot2.y_coord -= 25 * ycount;
 				temp_dot2.height = ft_atoi(prev_data[i]);
-				ft_draw_line(img, &temp_dot2, &temp_dot1, 0x00FFFFFF);
+				temp_dot2.thick = 1;
+				ft_draw_line(img,iso_coord(&temp_dot2), iso_coord(&temp_dot1), 0x00FFFFFF);
 			}
 			i++;
 		}
@@ -165,17 +221,17 @@ int	ft_render(t_vars *vars)
 	/*t_dot	dot1;
 	t_dot	dot2;
 
-	dot1.x_coord = 100;
-	dot1.y_coord = 100;
-	dot2.x_coord = 800;
-	dot2.y_coord = 100;
+	dot1.x_coord = -110;
+	dot1.y_coord = 200;
+	dot2.x_coord = 1200;
+	dot2.y_coord = 900;
 	dot1.thick = 1;*/
 
 	int fd = open("42.fdf", O_RDONLY);
 	//int fd = open("mars.fdf", O_RDONLY);
 	img.img = mlx_new_image(vars->mlx, vars->win_width, vars->win_height);
 	img.addr = mlx_get_data_addr(img.img, &img.bpp, &img.l_len, &img.endian);
-	img.margin = 30;
+	img.margin = 70;
 	//ft_draw_line(&img, &dot1, &dot2, 0x00FFFFFF);
 	img = ft_draw_grid(&img, fd);
 	mlx_put_image_to_window(vars->mlx, vars->win, img.img, 0, 0);
@@ -188,8 +244,8 @@ int	main(int argc, char **argv)
 	(void) argv;
 	t_vars	vars;
 	vars.mlx = mlx_init();
-	vars.win_width = 1200;
-	vars.win_height = 700;
+	vars.win_width = 1500;
+	vars.win_height = 1100;
 	vars.win = mlx_new_window(vars.mlx, vars.win_width, vars.win_height, "FdF test");
 	//mlx_hook(vars.win, 2, 0, ft_event_handle, &vars);
 	//mlx_loop_hook(vars.mlx, ft_render, &vars);
