@@ -6,7 +6,7 @@
 /*   By: jibot <marvin@42.fr>                       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/30 13:35:32 by jibot             #+#    #+#             */
-/*   Updated: 2022/01/09 17:38:25 by jibot            ###   ########.fr       */
+/*   Updated: 2022/01/10 11:51:33 by jibot            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,16 +35,9 @@ typedef struct s_vars {
 typedef struct s_dot {
 	float x_coord;
 	float y_coord;
-	int thick;
+	float thick;
 	int height;
 }	t_dot;
-
-float	v_abs(float a)
-{
-	if (a < 0)
-		return (-a);
-	return (a);
-}
 
 float	ft_min(float a, float b)
 {
@@ -108,8 +101,8 @@ t_dot	*iso_coord(t_dot *dot)
 
 	x = dot->x_coord;
 	y = dot->y_coord;
-	dot->x_coord = 0.866 * x - 0.866 * y;
-	dot->y_coord = 0.500 * x + 0.500 * y;
+	dot->x_coord = 0.866 * (x - y);
+	dot->y_coord = 0.500 * (x + y) - (4 * 0.866 * dot->height);
 	return (dot);
 }
 
@@ -119,8 +112,8 @@ t_dot	*norm_coord(t_dot *dot)
 	float	y;
 
 	x = dot->x_coord;
-	y = dot->y_coord;
-	dot->x_coord = 0.500 * (x / 0.866 + y / 0.500);
+	y = dot->y_coord + (4 * 0.866 * dot->height);
+	dot->x_coord = 0.500 * (y / 0.500 + x / 0.866);
 	dot->y_coord = 0.500 * (y / 0.500 - x / 0.866);
 	return (dot);
 }
@@ -131,10 +124,10 @@ t_data	ft_draw_line(t_data *img, t_dot *dot1, t_dot *dot2, int color)
 	float y;
 
 	x = ft_min(dot1->x_coord, dot2->x_coord);
-	while (x <= ft_max(dot1->x_coord, dot2->x_coord) + 1)
+	while (x <= ft_max(dot1->x_coord, dot2->x_coord))
 	{
 		y = ft_min(dot1->y_coord, dot2->y_coord);
-		while (y <= ft_max(dot1->y_coord, dot2->y_coord) + 1)
+		while (y <= ft_max(dot1->y_coord, dot2->y_coord))
 		{
 			if (is_grid_seg(x, y, dot1, dot2))
 				ft_mlx_pixput(img, x, y, color);
@@ -160,6 +153,7 @@ char	**ft_tabdup(char **data)
 		dup[i] = data[i];
 		i++;
 	}
+	dup[i] = NULL;
 	return (dup);
 }
 
@@ -179,35 +173,37 @@ t_data	ft_draw_grid(t_data *img, int fd)
 	while (line_data)
 	{
 		i = 0;
-		prev_data = ft_tabdup(line_data);
 		while (line_data[i])
 		{
-			temp_dot1.x_coord = 25 * (i + 1) + 11 *img->margin;
-			temp_dot1.y_coord = 25 * ycount + img->margin;
 			temp_dot1.height = ft_atoi(line_data[i]);
+			temp_dot1.x_coord = 40 * (i + 1) + 25 * img->margin;
+			temp_dot1.y_coord = 40 * ycount + img->margin;
 			temp_dot1.thick = 1;
 			if (line_data[i + 1])
 			{
-				temp_dot2.x_coord = 25 * (i + 2) + 11 * img->margin;
-				temp_dot2.y_coord = 25 * ycount + img->margin;
 				temp_dot2.height = ft_atoi(line_data[i + 1]);
+				temp_dot2.x_coord = 40 * (i + 2) + 25 * img->margin;
+				temp_dot2.y_coord = 40 * ycount + img->margin;
 			}
 			else
 				temp_dot2 = temp_dot1;
 			ft_draw_line(img, iso_coord(&temp_dot1), iso_coord(&temp_dot2), 0x00FFFFFF);
+			//printf("%f %f || %f %f\n", temp_dot2.x_coord, temp_dot2.y_coord, temp_dot1.x_coord, temp_dot1.y_coord);
 			if (ycount > 0)
 			{
 				temp_dot1 = *norm_coord(&temp_dot1);
-				printf("%f\n", temp_dot1.x_coord); 
-				printf("%f\n", temp_dot1.y_coord); 
 				temp_dot2 = temp_dot1;
-				temp_dot2.y_coord -= 25 * ycount;
 				temp_dot2.height = ft_atoi(prev_data[i]);
-				temp_dot2.thick = 1;
-				ft_draw_line(img,iso_coord(&temp_dot2), iso_coord(&temp_dot1), 0x00FFFFFF);
+				temp_dot2.y_coord -= 40;
+				temp_dot2.thick = 0.5;
+				//printf("%d\n", temp_dot1.height);
+				//printf("%d\n", temp_dot2.height);
+				//printf("%d\n\n", temp_dot1.height);
+				ft_draw_line(img, iso_coord(&temp_dot1), iso_coord(&temp_dot2), 0x00FFFFFF);
 			}
 			i++;
 		}
+		prev_data = ft_tabdup(line_data);
 		buffer = get_next_line(fd);
 		line_data = ft_split(buffer, ' ');
 		ycount++;
@@ -231,7 +227,7 @@ int	ft_render(t_vars *vars)
 	//int fd = open("mars.fdf", O_RDONLY);
 	img.img = mlx_new_image(vars->mlx, vars->win_width, vars->win_height);
 	img.addr = mlx_get_data_addr(img.img, &img.bpp, &img.l_len, &img.endian);
-	img.margin = 70;
+	img.margin = 30;
 	//ft_draw_line(&img, &dot1, &dot2, 0x00FFFFFF);
 	img = ft_draw_grid(&img, fd);
 	mlx_put_image_to_window(vars->mlx, vars->win, img.img, 0, 0);
