@@ -6,7 +6,7 @@
 /*   By: jibot <marvin@42.fr>                       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/30 13:35:32 by jibot             #+#    #+#             */
-/*   Updated: 2022/01/12 18:25:46 by jibot            ###   ########.fr       */
+/*   Updated: 2022/01/12 19:25:29 by jibot            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,31 +15,30 @@
 #include "./libft/libft.h"
 #include "get_next_line.h"
 
-typedef struct s_vars {
-	void	*img;
-	//void	*t_img;
-	void	*mlx;
-	void	*win;
-	char	*addr;
-	int		win_width;
-	int		win_height;
-	int		move_h;
-	int		move_v;
-	int		margin;
-	int		bpp;
-	int		l_len;
-	int		endian;
-	int		is_drawn;
-}	t_vars;
+typedef struct s_render {
+	int	win_width;
+	int win_height;
+	int margin;
+	int seg_len;
+}	t_render;
 
-/*typedef struct s_vars {
-  void	*mlx;
-  void	*win;
-  int		win_width;
-  int		win_height;
-  int		move_h;
-  int		move_v;
-  }	t_vars;*/
+typedef struct s_data {
+  void	*img;
+  char	*addr;
+  int	bpp;
+  int	l_len;
+  int	endian;
+}	t_data;
+
+typedef struct s_vars {
+	t_data		img;
+	t_render	render;
+	void		*mlx;
+	void		*win;
+	int			move_h;
+	int			move_v;
+	int			is_drawn;
+}	t_vars;
 
 typedef struct s_dot {
 	float x_coord;
@@ -66,20 +65,21 @@ void	ft_mlx_pixput(t_vars *data, int x, int y, int color)
 {
 	char	*dst;
 
-	dst = data->addr + (y * data->l_len + x * (data->bpp / 8));
+	dst = data->img.addr + (y * data->img.l_len + x * (data->img.bpp / 8));
 	*(unsigned int*)dst = color;
 }
 
 int	ft_event_handle(int keycode, t_vars *vars)
 {
 	if (keycode == 0 || keycode == 2)
-		vars->move_h += (keycode - 1) * 4;
+		vars->move_h += (keycode - 1) * (vars->render.win_width / 300);
 	else if (keycode == 13)
-		vars->move_v -= 4;
+		vars->move_v -= (vars->render.win_height / 200);
 	else if (keycode == 1)
-		vars->move_v += 4;
+		vars->move_v += (vars->render.win_height / 200);
 	else if (keycode == 53)
 		mlx_destroy_window(vars->mlx, vars->win);
+	vars->is_drawn = 0;
 	return (keycode);
 }
 
@@ -112,8 +112,8 @@ t_dot	*iso_coord(t_dot *dot, t_vars vars)
 
 	x = dot->x_coord;
 	y = dot->y_coord;
-	dot->x_coord = 0.866 * (x - y) + vars.move_h;
-	dot->y_coord = 0.500 * (x + y) - (4 * 0.866 * dot->height) + vars.move_v;
+	dot->x_coord = 0.866 * (x - y) + vars.move_h - (6 * vars.render.margin);
+	dot->y_coord = 0.500 * (x + y) - (8 * 0.866 * dot->height) + vars.move_v;
 	return (dot);
 }
 
@@ -122,8 +122,8 @@ t_dot	*norm_coord(t_dot *dot, t_vars vars)
 	float	x;
 	float	y;
 
-	x = dot->x_coord - vars.move_h;
-	y = dot->y_coord + (4 * 0.866 * dot->height) - vars.move_v;
+	x = dot->x_coord - vars.move_h + (6 * vars.render.margin);
+	y = dot->y_coord + (8 * 0.866 * dot->height) - vars.move_v;
 	dot->x_coord = 0.500 * (y / 0.500 + x / 0.866);
 	dot->y_coord = 0.500 * (y / 0.500 - x / 0.866);
 	return (dot);
@@ -169,7 +169,17 @@ char	**ft_tabdup(char **data)
 	return (dup);
 }
 
-void	ft_draw_grid(int fd, t_vars vars)
+int	ft_tablen(char **tab)
+{
+	int i;
+
+	i = 0;
+	while (tab[i])
+		i++;
+	return (i);
+}
+
+void	ft_draw_grid(int fd, t_vars *vars)
 {
 	t_dot	temp_dot1;
 	t_dot	temp_dot2;
@@ -178,36 +188,39 @@ void	ft_draw_grid(int fd, t_vars vars)
 	char	**prev_data;
 	int		i;
 	int		ycount;
+	static int		count;
 
 	ycount = 0;
 	buffer = get_next_line(fd);
 	line_data = ft_split(buffer, ' ');
+	vars->render.margin = vars->render.win_width / 10;
+	vars->render.seg_len = (vars->render.win_width - 2 * vars->render.margin) / (2 * ft_tablen(line_data));
 	while (buffer)
 	{
 		i = 0;
 		while (line_data && line_data[i])
 		{
 			temp_dot1.height = ft_atoi(line_data[i]);
-			temp_dot1.x_coord = 40 * (i + 1) - 10  * vars.margin;
-			temp_dot1.y_coord = 40 * ycount + 10 * vars.margin;
+			temp_dot1.x_coord = vars->render.seg_len * (i + 1) + vars->render.margin;
+			temp_dot1.y_coord = vars->render.seg_len * ycount + vars->render.margin;
 			temp_dot1.thick = 1;
 			if (line_data[i + 1])
 			{
 				temp_dot2.height = ft_atoi(line_data[i + 1]);
-				temp_dot2.x_coord = 40 * (i + 2) - 10 * vars.margin;
-				temp_dot2.y_coord = 40 * ycount + 10 *vars.margin;
+				temp_dot2.x_coord = vars->render.seg_len * (i + 2) + vars->render.margin;
+				temp_dot2.y_coord = vars->render.seg_len * ycount + vars->render.margin;
 			}
 			else
 				temp_dot2 = temp_dot1;
-			ft_draw_line(vars, *iso_coord(&temp_dot1, vars), *iso_coord(&temp_dot2, vars),  0x00FFFFFF);
+			ft_draw_line(*vars, *iso_coord(&temp_dot1, *vars), *iso_coord(&temp_dot2, *vars),  0x00FFFFFF);
 			if (ycount > 0)
 			{
-				temp_dot1 = *norm_coord(&temp_dot1, vars);
+				temp_dot1 = *norm_coord(&temp_dot1, *vars);
 				temp_dot2 = temp_dot1;
 				temp_dot2.height = ft_atoi(prev_data[i]);
-				temp_dot2.y_coord -= 40;
+				temp_dot2.y_coord -= vars->render.seg_len;
 				temp_dot2.thick = 0.5;
-				ft_draw_line(vars, *iso_coord(&temp_dot1, vars), *iso_coord(&temp_dot2, vars), 0x00FFFFFF);
+				ft_draw_line(*vars, *iso_coord(&temp_dot1, *vars), *iso_coord(&temp_dot2, *vars), 0x00FFFFFF);
 			}
 			i++;
 		}
@@ -221,6 +234,9 @@ void	ft_draw_grid(int fd, t_vars vars)
 	}
 	free(line_data);
 	free(prev_data);
+	vars->is_drawn = 1;
+	count++;
+	printf("%d\n", count);
 }
 
 void	ft_set_black(t_vars *vars)
@@ -229,10 +245,10 @@ void	ft_set_black(t_vars *vars)
 	int	y;
 
 	x = 0;
-	while (x < vars->win_width)
+	while (x < vars->render.win_width)
 	{
 		y = 0;
-		while (y < vars->win_height)
+		while (y < vars->render.win_height)
 		{
 			ft_mlx_pixput(vars, x, y, 0x00000000);
 			y++;
@@ -244,14 +260,17 @@ void	ft_set_black(t_vars *vars)
 int	ft_render(t_vars *vars)
 {
 	int	i;
-	int fd = open("42.fdf", O_RDONLY);
+	//int fd = open("42.fdf", O_RDONLY);
 	//int fd = open("mars.fdf", O_RDONLY);
-	//int fd = open("pyramide.fdf", O_RDONLY);
+	int fd = open("pyramide.fdf", O_RDONLY);
 	
-	i = 0;
-	ft_set_black(vars);
-	ft_draw_grid(fd, *vars);
-	mlx_put_image_to_window(vars->mlx, vars->win, vars->img, 0, 0);
+	if (!vars->is_drawn)
+	{
+		i = 0;
+		ft_set_black(vars);
+		ft_draw_grid(fd, vars);
+		mlx_put_image_to_window(vars->mlx, vars->win, vars->img.img, 0, 0);
+	}
 	close (fd);
 	return (1);
 }
@@ -262,14 +281,14 @@ int	main(int argc, char **argv)
 	(void) argv;
 	t_vars	vars;
 
-	vars.is_drawn = 0;
 	vars.mlx = mlx_init();
-	vars.win_width = 1500;
-	vars.win_height = 1100;
-	vars.margin = 50;
-	vars.win = mlx_new_window(vars.mlx, vars.win_width, vars.win_height, "FdF");
-	vars.img = mlx_new_image(vars.mlx, vars.win_width, vars.win_height);
-	vars.addr = mlx_get_data_addr(vars.img, &vars.bpp, &vars.l_len, &vars.endian);
+	vars.render.win_width = 1920;
+	vars.render.win_height = 1080;
+	//vars.render.margin = 50;
+	//vars.render.seg_len = 40;
+	vars.win = mlx_new_window(vars.mlx, vars.render.win_width, vars.render.win_height, "FdF");
+	vars.img.img = mlx_new_image(vars.mlx, vars.render.win_width, vars.render.win_height);
+	vars.img.addr = mlx_get_data_addr(vars.img.img, &vars.img.bpp, &vars.img.l_len, &vars.img.endian);
 	mlx_hook(vars.win, 2, 0, ft_event_handle, &vars);
 	mlx_loop_hook(vars.mlx, ft_render, &vars);
 	mlx_loop(vars.mlx);
