@@ -6,7 +6,7 @@
 /*   By: jibot <marvin@42.fr>                       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/30 13:35:32 by jibot             #+#    #+#             */
-/*   Updated: 2022/01/14 13:22:31 by jibot            ###   ########.fr       */
+/*   Updated: 2022/01/14 16:54:52 by jibot            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,11 +27,20 @@ int	ft_key_handle(int keycode, t_vars *vars)
 	else if (keycode == 125)
 		vars->max_height -= 1;
 	else if (keycode == 30)
-		vars->render.zoom += 1;
+		vars->render.x_factor += 0.003;
 	else if (keycode == 33)
-		vars->render.zoom -= 1;
+		vars->render.x_factor -= 0.003;
 	vars->is_drawn = 0;
 	return (keycode);
+}
+
+int	ft_move_handle(int x, int y, t_vars *vars)
+{
+	printf("%i || %i\n", x, y);
+	x /= 1920;
+	y /= 1035;
+	vars->render.x_factor += (0.0001);
+	return (1);
 }
 
 int	ft_button_handle(int button, int x, int y, t_vars *vars)
@@ -39,12 +48,12 @@ int	ft_button_handle(int button, int x, int y, t_vars *vars)
 	(void) x;
 	(void) y;
 
-	if (button == 4)
-		vars->render.zoom -= 1;
-	if (button == 5)
+	if (button == 1)
+		mlx_hook(vars->win, 6, 0, ft_move_handle, vars);
+	/*if (button == 5)
 		vars->render.zoom += 1;
-	/*vars->render.x_factor += x + y;
-	vars->is_drawn = 0;*/
+	vars->render.x_factor += x + y;*/
+	vars->is_drawn = 0;
 	return (1);
 }
 
@@ -72,7 +81,7 @@ void	ft_draw_grid(int fd, t_vars *vars)
 			temp_dot1.height = ft_atoi(line_data[i]);
 			temp_dot1.x_coord = vars->render.seg_len * (i + 1) + vars->render.margin;
 			temp_dot1.y_coord = vars->render.seg_len * ycount + vars->render.margin;
-			temp_dot1.thick = 2;
+			temp_dot1.thick = 1;
 			if (line_data[i + 1])
 			{
 				temp_dot2.height = ft_atoi(line_data[i + 1]);
@@ -84,12 +93,13 @@ void	ft_draw_grid(int fd, t_vars *vars)
 			ft_draw_line(*vars, *iso_coord(&temp_dot1, *vars), *iso_coord(&temp_dot2, *vars));
 			if (ycount > 0)
 			{
-				temp_dot1 = *norm_coord(&temp_dot1, *vars);
+				vars->render.y_factor = ft_sqrt(1 - vars->render.x_factor * vars->render.x_factor);
 				temp_dot2 = temp_dot1;
 				temp_dot2.height = ft_atoi(prev_data[i]);
-				temp_dot2.y_coord -= vars->render.seg_len;
-				temp_dot2.thick = 1.5;
-			ft_draw_line(*vars, *iso_coord(&temp_dot2, *vars), *iso_coord(&temp_dot1, *vars));
+				temp_dot2.x_coord += vars->render.seg_len * vars->render.x_factor;
+				temp_dot2.y_coord -= vars->render.seg_len * vars->render.y_factor + 4 * vars->render.x_factor * (temp_dot2.height - temp_dot1.height) ;
+				temp_dot2.thick = 1;
+			ft_draw_line(*vars, temp_dot2, temp_dot1);
 			}
 			i++;
 		}
