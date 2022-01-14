@@ -6,21 +6,32 @@
 /*   By: jibot <marvin@42.fr>                       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/20 12:22:39 by jibot             #+#    #+#             */
-/*   Updated: 2021/12/08 18:49:45 by jibot            ###   ########.fr       */
+/*   Updated: 2022/01/13 16:27:46 by jibot            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 #include "libft.h"
 
-int	ft_sqrt(int nb)
+float	ft_sqrt(float nb)
 {
-	unsigned int	a;
+	float	a;
+	float	ord;
 
-	if (nb <= 0 || nb == 2)
-		return (0);
+	ord = 1;
 	a = 0;
-	while (a * a < (unsigned) nb)
+	if (nb <= 0)
+		return (0);
+	while (a * a < nb)
 		a++;
-	if (nb % a == 0)
-		return ((int) a);
-	return (0);
+	if (a * a == nb)
+		return (a);
+	while (ord > 0.001)
+	{
+		a -= ord;
+		ord *= 0.1; 
+		while (a * a < nb)
+		{
+			a += ord;
+		}
+	}
+	return (a);
 }

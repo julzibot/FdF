@@ -6,14 +6,10 @@
 /*   By: jibot <marvin@42.fr>                       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/30 13:35:32 by jibot             #+#    #+#             */
-/*   Updated: 2022/01/13 22:12:51 by jibot            ###   ########.fr       */
+/*   Updated: 2022/01/14 13:22:31 by jibot            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <mlx.h>
-#include <stdio.h>
-#include "./libft/libft.h"
-#include "get_next_line.h"
 #include "FdF.h"
 
 int	ft_key_handle(int keycode, t_vars *vars)

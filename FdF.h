@@ -1,0 +1,70 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   FdF.h                                              :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: jibot <marvin@42.fr>                       +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2022/01/13 21:50:15 by jibot             #+#    #+#             */
+/*   Updated: 2022/01/14 12:54:59 by jibot            ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#ifndef FDF_H
+# define FDF_H
+# include <mlx.h>
+# include <stdio.h>
+# include "./libft/libft.h"
+# include "get_next_line.h"
+
+typedef struct s_render {
+	int	win_width;
+	int win_height;
+	int margin;
+	int seg_len;
+	float x_factor;
+	float y_factor;
+	float zoom;
+}	t_render;
+
+typedef struct s_data {
+  void	*img;
+  char	*addr;
+  int	bpp;
+  int	l_len;
+  int	endian;
+}	t_data;
+
+typedef struct s_vars {
+	t_data		img;
+	t_render	render;
+	void		*mlx;
+	void		*win;
+	int			move_h;
+	int			move_v;
+	int			max_height;
+	int			zoom;
+	int			is_drawn;
+}	t_vars;
+
+typedef struct s_dot {
+	float x_coord;
+	float y_coord;
+	float thick;
+	int height;
+	int max_height;
+}	t_dot;
+
+float	is_grid_seg(int x, int y, t_dot *dot1, t_dot *dot2);
+t_dot	*iso_coord(t_dot *dot, t_vars vars);
+t_dot	*norm_coord(t_dot *dot, t_vars vars);
+void	ft_mlx_pixput(t_vars *data, int x, int y, int color);
+int		color_gradient(int x, int y, t_dot dot1, t_dot dot2);
+t_vars	ft_draw_line(t_vars img, t_dot dot1, t_dot dot2);
+void	ft_set_black(t_vars *vars);
+float	ft_min(float a, float b);
+float	ft_max(float a, float b);
+int		ft_tablen(char **tab);
+char	**ft_tabdup(char **data);
+
+#endif
