@@ -6,7 +6,7 @@
 /*   By: jibot <marvin@42.fr>                       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/30 13:35:32 by jibot             #+#    #+#             */
-/*   Updated: 2022/01/14 16:54:52 by jibot            ###   ########.fr       */
+/*   Updated: 2022/01/14 17:51:29 by jibot            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,10 @@ int	ft_key_handle(int keycode, t_vars *vars)
 		vars->render.x_factor += 0.003;
 	else if (keycode == 33)
 		vars->render.x_factor -= 0.003;
+	else if (keycode == 39)
+		vars->render.bar_rot -= 0.02;
+	else if (keycode == 41)
+		vars->render.bar_rot += 0.02;
 	vars->is_drawn = 0;
 	return (keycode);
 }
@@ -90,13 +94,15 @@ void	ft_draw_grid(int fd, t_vars *vars)
 			}
 			else
 				temp_dot2 = temp_dot1;
-			ft_draw_line(*vars, *iso_coord(&temp_dot1, *vars), *iso_coord(&temp_dot2, *vars));
+			temp_dot1 = *iso_coord(&temp_dot1, *vars);
+			temp_dot2 = *iso_coord(&temp_dot2, *vars);
+			ft_draw_line(*vars, temp_dot1, temp_dot2);
 			if (ycount > 0)
 			{
 				vars->render.y_factor = ft_sqrt(1 - vars->render.x_factor * vars->render.x_factor);
 				temp_dot2 = temp_dot1;
 				temp_dot2.height = ft_atoi(prev_data[i]);
-				temp_dot2.x_coord += vars->render.seg_len * vars->render.x_factor;
+				temp_dot2.x_coord += vars->render.seg_len * vars->render.x_factor * vars->render.bar_rot/* - vars->render.bar_rot*/;
 				temp_dot2.y_coord -= vars->render.seg_len * vars->render.y_factor + 4 * vars->render.x_factor * (temp_dot2.height - temp_dot1.height) ;
 				temp_dot2.thick = 1;
 			ft_draw_line(*vars, temp_dot2, temp_dot1);
@@ -146,9 +152,9 @@ int	main(int argc, char **argv)
 	vars.win = mlx_new_window(vars.mlx, vars.render.win_width, vars.render.win_height, "FdF");
 	vars.img.img = mlx_new_image(vars.mlx, vars.render.win_width, vars.render.win_height);
 	vars.img.addr = mlx_get_data_addr(vars.img.img, &vars.img.bpp, &vars.img.l_len, &vars.img.endian);
-	vars.render.zoom = 0;
 	vars.max_height = 10;
 	vars.render.x_factor = 0.866;
+	vars.render.bar_rot = 1;
 	mlx_hook(vars.win, 2, 0, ft_key_handle, &vars);
 	mlx_hook(vars.win, 4, 0, ft_button_handle, &vars);
 	//mlx_hook(vars.win, 6, 0, ft_button_handle, &vars);
