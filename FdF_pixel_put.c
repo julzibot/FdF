@@ -6,7 +6,7 @@
 /*   By: jibot <marvin@42.fr>                       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/13 21:38:31 by jibot             #+#    #+#             */
-/*   Updated: 2022/01/13 22:02:23 by jibot            ###   ########.fr       */
+/*   Updated: 2022/01/15 15:32:11 by jibot            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,7 @@ t_vars	ft_draw_line(t_vars img, t_dot dot1, t_dot dot2)
 		y = ft_min(dot1.y_coord, dot2.y_coord);
 		while (y <= ft_max(dot1.y_coord, dot2.y_coord))
 		{
-			if (is_grid_seg(x, y, &dot1, &dot2) >= 0)
+			if (is_grid_seg(x, y, &dot1, &dot2) >= 0 && x < img.render.win_width && y < img.render.win_height)
 				ft_mlx_pixput(&img, x, y, color_gradient(x, y, dot1, dot2));
 			y++;
 		}

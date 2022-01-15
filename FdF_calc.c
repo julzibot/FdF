@@ -6,7 +6,7 @@
 /*   By: jibot <marvin@42.fr>                       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/13 21:45:01 by jibot             #+#    #+#             */
-/*   Updated: 2022/01/13 22:03:07 by jibot            ###   ########.fr       */
+/*   Updated: 2022/01/15 16:27:27 by jibot            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,12 +53,12 @@ t_dot	*iso_coord(t_dot *dot, t_vars vars)
 	x = dot->x_coord;
 	y = dot->y_coord;
 	y_factor = ft_sqrt(1 - vars.render.x_factor * vars.render.x_factor);
-	dot->x_coord = vars.render.x_factor * (x - y) + vars.move_h - (6 * vars.render.margin);
-	dot->y_coord = y_factor * (x + y) - (4 * vars.render.x_factor * dot->height) + vars.move_v;
+	dot->x_coord = vars.render.x_factor * (x - y) * vars.render.bar_rot + vars.move_h - (6 * vars.render.margin);
+	dot->y_coord = y_factor * (x + y) - (vars.render.height * vars.render.x_factor * dot->height) + vars.move_v;
 	return (dot);
 }
 
-t_dot	*norm_coord(t_dot *dot, t_vars vars)
+/*t_dot	*norm_coord(t_dot *dot, t_vars vars)
 {
 	float	x;
 	float	y;
@@ -67,7 +67,7 @@ t_dot	*norm_coord(t_dot *dot, t_vars vars)
 	y_factor = ft_sqrt(1 - vars.render.x_factor * vars.render.x_factor);
 	x = dot->x_coord - vars.move_h + (6 * vars.render.margin);
 	y = dot->y_coord + (4 * vars.render.x_factor * dot->height) - vars.move_v;
-	dot->x_coord = 0.500 * (y / 0.500 + x / vars.render.x_factor);
-	dot->y_coord = 0.500 * (y / 0.500 - x / vars.render.x_factor);
+	dot->x_coord = y_factor * (y / y_factor + x / vars.render.x_factor);
+	dot->y_coord = y_factor * (y / y_factor - x / vars.render.x_factor);
 	return (dot);
-}
+}*/

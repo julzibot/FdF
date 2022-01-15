@@ -6,7 +6,7 @@
 /*   By: jibot <marvin@42.fr>                       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/30 13:35:32 by jibot             #+#    #+#             */
-/*   Updated: 2022/01/14 17:51:29 by jibot            ###   ########.fr       */
+/*   Updated: 2022/01/15 17:11:49 by jibot            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,11 +15,11 @@
 int	ft_key_handle(int keycode, t_vars *vars)
 {
 	if (keycode == 0 || keycode == 2)
-		vars->move_h += (keycode - 1) * (vars->render.win_width / 300);
+		vars->move_h -= (keycode - 1) * (vars->render.win_width / 300);
 	else if (keycode == 13)
-		vars->move_v -= (vars->render.win_height / 200);
-	else if (keycode == 1)
 		vars->move_v += (vars->render.win_height / 200);
+	else if (keycode == 1)
+		vars->move_v -= (vars->render.win_height / 200);
 	else if (keycode == 53)
 		mlx_destroy_window(vars->mlx, vars->win);
 	else if (keycode == 126)
@@ -34,29 +34,63 @@ int	ft_key_handle(int keycode, t_vars *vars)
 		vars->render.bar_rot -= 0.02;
 	else if (keycode == 41)
 		vars->render.bar_rot += 0.02;
+	else if (keycode == 123)
+		vars->render.height -= 1;
+	else if (keycode == 124)
+		vars->render.height += 1;
 	vars->is_drawn = 0;
 	return (keycode);
 }
 
 int	ft_move_handle(int x, int y, t_vars *vars)
 {
-	printf("%i || %i\n", x, y);
-	x /= 1920;
-	y /= 1035;
-	vars->render.x_factor += (0.0001);
+	float	prev_x;
+	float	prev_y;
+
+	prev_x = vars->render.xmove;
+	prev_y = vars->render.ymove;
+	vars->render.xmove = x/1920;
+	vars->render.ymove = y/1035;
+
+	if (vars->render.ymove > prev_y)
+		vars->render.x_factor += 0.005;
+	else if (vars->render.ymove < prev_y)
+		vars->render.x_factor -= 0.005;
+	vars->is_drawn = 0;
 	return (1);
 }
 
-int	ft_button_handle(int button, int x, int y, t_vars *vars)
+int	ft_buttonr_handle(int button, int x, int y, t_vars *vars)
 {
-	(void) x;
-	(void) y;
+	x = 1;
+	y = 1;
+	if (button == 1)
+		return (1);
+	return (0);
+	vars->is_drawn = 0;
+}
+
+int	ft_buttonp_handle(int button, int x, int y, t_vars *vars)
+{
+	x = 1;
+	y = 1;
 
 	if (button == 1)
+	{
+		mlx_hook(vars->win, 4, 0, ft_buttonp_handle, vars);
 		mlx_hook(vars->win, 6, 0, ft_move_handle, vars);
-	/*if (button == 5)
-		vars->render.zoom += 1;
-	vars->render.x_factor += x + y;*/
+		//mlx_hook(vars->win, 5, 0, ft_buttonr_handle, vars);
+	}
+	if (button == 4)
+	{
+		vars->render.zoom += 1.5;
+		vars->render.height += 0.17;
+	}
+	else if (button == 5)
+	{
+		vars->render.zoom -= 1.5;
+		vars->render.height -= 0.17;
+	}
 	vars->is_drawn = 0;
 	return (1);
 }
@@ -76,7 +110,7 @@ void	ft_draw_grid(int fd, t_vars *vars)
 	buffer = get_next_line(fd);
 	line_data = ft_split(buffer, ' ');
 	vars->render.margin = vars->render.win_width / 10;
-	vars->render.seg_len = (vars->render.win_width - 2 * vars->render.margin) / (2 * ft_tablen(line_data));
+	vars->render.seg_len = ((vars->render.win_width - 2 * vars->render.margin) / (2 * ft_tablen(line_data))) + vars->render.zoom;
 	while (buffer)
 	{
 		i = 0;
@@ -99,12 +133,15 @@ void	ft_draw_grid(int fd, t_vars *vars)
 			ft_draw_line(*vars, temp_dot1, temp_dot2);
 			if (ycount > 0)
 			{
-				vars->render.y_factor = ft_sqrt(1 - vars->render.x_factor * vars->render.x_factor);
+				vars->render.y_factor =  ft_sqrt(1 - vars->render.x_factor * vars->render.x_factor);
 				temp_dot2 = temp_dot1;
-				temp_dot2.height = ft_atoi(prev_data[i]);
-				temp_dot2.x_coord += vars->render.seg_len * vars->render.x_factor * vars->render.bar_rot/* - vars->render.bar_rot*/;
-				temp_dot2.y_coord -= vars->render.seg_len * vars->render.y_factor + 4 * vars->render.x_factor * (temp_dot2.height - temp_dot1.height) ;
-				temp_dot2.thick = 1;
+				if (prev_data[i])
+				{
+					temp_dot2.height = ft_atoi(prev_data[i]);
+					temp_dot2.x_coord += vars->render.seg_len * vars->render.x_factor * vars->render.bar_rot;
+					temp_dot2.y_coord -= vars->render.seg_len * vars->render.y_factor + vars->render.height * vars->render.x_factor * (temp_dot2.height - temp_dot1.height);
+					temp_dot2.thick = 1;
+				}
 			ft_draw_line(*vars, temp_dot2, temp_dot1);
 			}
 			i++;
@@ -123,9 +160,7 @@ void	ft_draw_grid(int fd, t_vars *vars)
 int	ft_render(t_vars *vars)
 {
 	int	i;
-	int fd = open("42.fdf", O_RDONLY);
-	//int fd = open("mars.fdf", O_RDONLY);
-	//int fd = open("pyramide.fdf", O_RDONLY);
+	int fd = open(vars->img.img_name, O_RDONLY);
 		
 	if (!vars->is_drawn)
 	{
@@ -141,22 +176,22 @@ int	ft_render(t_vars *vars)
 int	main(int argc, char **argv)
 {
 	(void) argc;
-	(void) argv;
 	t_vars	vars;
 
 	vars.mlx = mlx_init();
+	vars.img.img_name = argv[1];
 	vars.render.win_width = 1920;
 	vars.render.win_height = 1080;
-	//vars.render.margin = 50;
-	//vars.render.seg_len = 40;
 	vars.win = mlx_new_window(vars.mlx, vars.render.win_width, vars.render.win_height, "FdF");
 	vars.img.img = mlx_new_image(vars.mlx, vars.render.win_width, vars.render.win_height);
 	vars.img.addr = mlx_get_data_addr(vars.img.img, &vars.img.bpp, &vars.img.l_len, &vars.img.endian);
 	vars.max_height = 10;
 	vars.render.x_factor = 0.866;
 	vars.render.bar_rot = 1;
+	vars.render.zoom = 0;
+	vars.render.height = 4;
 	mlx_hook(vars.win, 2, 0, ft_key_handle, &vars);
-	mlx_hook(vars.win, 4, 0, ft_button_handle, &vars);
+	mlx_hook(vars.win, 4, 0, ft_buttonp_handle, &vars);
 	//mlx_hook(vars.win, 6, 0, ft_button_handle, &vars);
 	mlx_loop_hook(vars.mlx, ft_render, &vars);
 	mlx_loop(vars.mlx);
