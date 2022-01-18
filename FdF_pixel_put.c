@@ -6,7 +6,7 @@
 /*   By: jibot <marvin@42.fr>                       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/13 21:38:31 by jibot             #+#    #+#             */
-/*   Updated: 2022/01/18 16:34:30 by jibot            ###   ########.fr       */
+/*   Updated: 2022/01/18 18:18:16 by jibot            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@ int	color_gradient(int x, int y, t_dot dot1, t_dot dot2)
 	if (dot1.height == dot2.height)
 		color =  (int)(((float)dot1.height / (float)max_height) * 510);
 	else
-		color = (int)(is_grid_seg(x, y, &dot1, &dot2) * 510 * (ft_max(dot1.height, dot2.height) / max_height) + 510 * (ft_min(dot1.height, dot2.height) / max_height));
+		color = (int)((510 / max_height) * (is_grid_seg(x, y, &dot1, &dot2) * (ft_max(dot1.height, dot2.height) - ft_min(dot1.height, dot2.height)) + ft_min(dot1.height, dot2.height)));
 	if (color <= 255)
 		return (0x00FFFFFF - color);
 	else
