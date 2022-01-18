@@ -6,7 +6,7 @@
 /*   By: jibot <marvin@42.fr>                       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/30 13:35:32 by jibot             #+#    #+#             */
-/*   Updated: 2022/01/15 17:11:49 by jibot            ###   ########.fr       */
+/*   Updated: 2022/01/18 17:28:04 by jibot            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,9 +35,13 @@ int	ft_key_handle(int keycode, t_vars *vars)
 	else if (keycode == 41)
 		vars->render.bar_rot += 0.02;
 	else if (keycode == 123)
-		vars->render.height -= 1;
+		vars->render.height -= 0.5;
 	else if (keycode == 124)
-		vars->render.height += 1;
+		vars->render.height += 0.5;
+	else if (keycode == 45)
+		vars->render.disc_rot -= 0.5;
+	else if (keycode == 46)
+		vars->render.disc_rot += 0.5;
 	vars->is_drawn = 0;
 	return (keycode);
 }
@@ -60,15 +64,15 @@ int	ft_move_handle(int x, int y, t_vars *vars)
 	return (1);
 }
 
-int	ft_buttonr_handle(int button, int x, int y, t_vars *vars)
-{
-	x = 1;
-	y = 1;
-	if (button == 1)
-		return (1);
-	return (0);
-	vars->is_drawn = 0;
-}
+/*int	ft_buttonr_handle(int button, int x, int y, t_vars *vars)
+  {
+  x = 1;
+  y = 1;
+  if (button == 1)
+  return (1);
+  return (0);
+  vars->is_drawn = 0;
+  }*/
 
 int	ft_buttonp_handle(int button, int x, int y, t_vars *vars)
 {
@@ -79,7 +83,6 @@ int	ft_buttonp_handle(int button, int x, int y, t_vars *vars)
 	{
 		mlx_hook(vars->win, 4, 0, ft_buttonp_handle, vars);
 		mlx_hook(vars->win, 6, 0, ft_move_handle, vars);
-		//mlx_hook(vars->win, 5, 0, ft_buttonr_handle, vars);
 	}
 	if (button == 4)
 	{
@@ -88,64 +91,87 @@ int	ft_buttonp_handle(int button, int x, int y, t_vars *vars)
 	}
 	else if (button == 5)
 	{
-		vars->render.zoom -= 1.5;
-		vars->render.height -= 0.17;
+		if (vars->render.seg_len > 2)
+		{
+			vars->render.zoom -= 1.5;
+			vars->render.height -= 0.17;
+		}
 	}
 	vars->is_drawn = 0;
 	return (1);
 }
 
-void	ft_draw_grid(int fd, t_vars *vars)
+void	draw_x(t_vars *vars, char **line_data, int ycount)
 {
+	int		i;
 	t_dot	temp_dot1;
 	t_dot	temp_dot2;
+
+	i = 0;
+	temp_dot1.max_height = vars->max_height;
+	while (line_data && line_data[i])
+	{
+		temp_dot1.height = ft_atoi(line_data[i]);
+		temp_dot1.x_coord = vars->render.seg_len * (i + 1) + vars->render.margin;
+		temp_dot1.y_coord = vars->render.seg_len * ycount + vars->render.margin;
+		temp_dot1.thick = 1;
+		if (line_data[i + 1])
+		{
+			temp_dot2.height = ft_atoi(line_data[i + 1]);
+			temp_dot2.x_coord = vars->render.seg_len * (i + 2) + vars->render.margin;
+			temp_dot2.y_coord = vars->render.seg_len * ycount + vars->render.margin;
+		}
+		else
+			temp_dot2 = temp_dot1;
+		ft_draw_line(*vars, *iso_coord(&temp_dot1, *vars), *iso_coord(&temp_dot2, *vars));
+		i++;
+	}
+}
+
+void	draw_y(t_vars *vars, char **line_data, char **prev_data, int ycount)
+{
+	int		i;
+	t_dot	temp_dot1;
+	t_dot	temp_dot2;
+
+	i = 0;
+	temp_dot1.max_height = vars->max_height;
+	while (line_data && line_data[i] && ycount > 0)
+	{
+		vars->render.y_factor =  ft_sqrt(1 - vars->render.x_factor * vars->render.x_factor);
+		temp_dot1.height = ft_atoi(line_data[i]);
+		temp_dot1.x_coord = vars->render.seg_len * (i + 1) + vars->render.margin;
+		temp_dot1.y_coord = vars->render.seg_len * ycount + vars->render.margin;
+		temp_dot1.thick = 1;
+		temp_dot2 = *iso_coord(&temp_dot1, *vars);;
+		if (prev_data[i])
+		{
+			temp_dot2.height = ft_atoi(prev_data[i]);
+			temp_dot2.x_coord += vars->render.seg_len * vars->render.x_factor * vars->render.bar_rot;
+			temp_dot2.y_coord -= vars->render.seg_len * vars->render.y_factor + vars->render.height * vars->render.x_factor * (temp_dot2.height - temp_dot1.height);
+		}
+		ft_draw_line(*vars, temp_dot2, temp_dot1);
+		i++;
+	}
+}
+
+
+void	ft_draw_grid(int fd, t_vars *vars)
+{
 	char	*buffer;
 	char	**line_data;
 	char	**prev_data;
-	int		i;
 	int		ycount;
 
 	ycount = 0;
-	temp_dot1.max_height = vars->max_height;
 	buffer = get_next_line(fd);
 	line_data = ft_split(buffer, ' ');
 	vars->render.margin = vars->render.win_width / 10;
 	vars->render.seg_len = ((vars->render.win_width - 2 * vars->render.margin) / (2 * ft_tablen(line_data))) + vars->render.zoom;
 	while (buffer)
 	{
-		i = 0;
-		while (line_data && line_data[i])
-		{
-			temp_dot1.height = ft_atoi(line_data[i]);
-			temp_dot1.x_coord = vars->render.seg_len * (i + 1) + vars->render.margin;
-			temp_dot1.y_coord = vars->render.seg_len * ycount + vars->render.margin;
-			temp_dot1.thick = 1;
-			if (line_data[i + 1])
-			{
-				temp_dot2.height = ft_atoi(line_data[i + 1]);
-				temp_dot2.x_coord = vars->render.seg_len * (i + 2) + vars->render.margin;
-				temp_dot2.y_coord = vars->render.seg_len * ycount + vars->render.margin;
-			}
-			else
-				temp_dot2 = temp_dot1;
-			temp_dot1 = *iso_coord(&temp_dot1, *vars);
-			temp_dot2 = *iso_coord(&temp_dot2, *vars);
-			ft_draw_line(*vars, temp_dot1, temp_dot2);
-			if (ycount > 0)
-			{
-				vars->render.y_factor =  ft_sqrt(1 - vars->render.x_factor * vars->render.x_factor);
-				temp_dot2 = temp_dot1;
-				if (prev_data[i])
-				{
-					temp_dot2.height = ft_atoi(prev_data[i]);
-					temp_dot2.x_coord += vars->render.seg_len * vars->render.x_factor * vars->render.bar_rot;
-					temp_dot2.y_coord -= vars->render.seg_len * vars->render.y_factor + vars->render.height * vars->render.x_factor * (temp_dot2.height - temp_dot1.height);
-					temp_dot2.thick = 1;
-				}
-			ft_draw_line(*vars, temp_dot2, temp_dot1);
-			}
-			i++;
-		}
+		draw_x(vars, line_data, ycount);
+		draw_y(vars, line_data, prev_data, ycount);
 		prev_data = ft_tabdup(line_data);
 		free(buffer);
 		buffer = get_next_line(fd);
@@ -161,7 +187,7 @@ int	ft_render(t_vars *vars)
 {
 	int	i;
 	int fd = open(vars->img.img_name, O_RDONLY);
-		
+
 	if (!vars->is_drawn)
 	{
 		i = 0;
@@ -188,6 +214,7 @@ int	main(int argc, char **argv)
 	vars.max_height = 10;
 	vars.render.x_factor = 0.866;
 	vars.render.bar_rot = 1;
+	vars.render.disc_rot = 0;
 	vars.render.zoom = 0;
 	vars.render.height = 4;
 	mlx_hook(vars.win, 2, 0, ft_key_handle, &vars);

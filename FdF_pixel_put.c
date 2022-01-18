@@ -6,7 +6,7 @@
 /*   By: jibot <marvin@42.fr>                       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/13 21:38:31 by jibot             #+#    #+#             */
-/*   Updated: 2022/01/15 15:32:11 by jibot            ###   ########.fr       */
+/*   Updated: 2022/01/18 16:34:30 by jibot            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,11 +37,6 @@ int	color_gradient(int x, int y, t_dot dot1, t_dot dot2)
 		color -= 255;
 		return (0x00FFFF00 - color * ft_pwr(16, 2));
 	}
-	/*else
-	{
-		color = 765 - color;
-		return (0x00FF0000 - color);
-	}*/
 }
 
 t_vars	ft_draw_line(t_vars img, t_dot dot1, t_dot dot2)
@@ -55,7 +50,8 @@ t_vars	ft_draw_line(t_vars img, t_dot dot1, t_dot dot2)
 		y = ft_min(dot1.y_coord, dot2.y_coord);
 		while (y <= ft_max(dot1.y_coord, dot2.y_coord))
 		{
-			if (is_grid_seg(x, y, &dot1, &dot2) >= 0 && x < img.render.win_width && y < img.render.win_height)
+			//printf("%f\n", y);
+			if (is_grid_seg(x, y, &dot1, &dot2) >= 0 && x < -1 && x > -(img.render.win_width + 1) && y > 0 && y < img.render.win_height)
 				ft_mlx_pixput(&img, x, y, color_gradient(x, y, dot1, dot2));
 			y++;
 		}
