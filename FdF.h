@@ -6,7 +6,7 @@
 /*   By: jibot <marvin@42.fr>                       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/13 21:50:15 by jibot             #+#    #+#             */
-/*   Updated: 2022/01/14 12:54:59 by jibot            ###   ########.fr       */
+/*   Updated: 2022/01/18 17:46:05 by jibot            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,10 +21,15 @@ typedef struct s_render {
 	int	win_width;
 	int win_height;
 	int margin;
-	int seg_len;
+	float seg_len;
+	float height;
 	float x_factor;
 	float y_factor;
+	float bar_rot;
+	//float disc_rot;
 	float zoom;
+	float xmove;
+	float ymove;
 }	t_render;
 
 typedef struct s_data {
@@ -33,6 +38,7 @@ typedef struct s_data {
   int	bpp;
   int	l_len;
   int	endian;
+  char	*img_name;
 }	t_data;
 
 typedef struct s_vars {
@@ -66,5 +72,8 @@ float	ft_min(float a, float b);
 float	ft_max(float a, float b);
 int		ft_tablen(char **tab);
 char	**ft_tabdup(char **data);
+int		ft_key_handle(int keycode, t_vars *vars);
+int		ft_move_handle(int x, int y, t_vars *vars);
+int		ft_buttonp_handle(int button, int x, int y, t_vars *vars);
 
 #endif

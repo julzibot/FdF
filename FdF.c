@@ -6,7 +6,7 @@
 /*   By: jibot <marvin@42.fr>                       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/30 13:35:32 by jibot             #+#    #+#             */
-/*   Updated: 2022/01/18 17:45:49 by jibot            ###   ########.fr       */
+/*   Updated: 2022/01/21 17:58:46 by jibot            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,20 +17,22 @@ void	draw_x(t_vars *vars, char **line_data, int ycount)
 	int		i;
 	t_dot	temp_dot1;
 	t_dot	temp_dot2;
+	float	seg;
 
 	i = 0;
+	seg = vars->render.seg_len;
 	temp_dot1.max_height = vars->max_height;
 	while (line_data && line_data[i])
 	{
 		temp_dot1.height = ft_atoi(line_data[i]);
-		temp_dot1.x_coord = vars->render.seg_len * (i + 1) + vars->render.margin;
-		temp_dot1.y_coord = vars->render.seg_len * ycount + vars->render.margin;
+		temp_dot1.x_coord = seg * (i + 1) + vars->render.margin;
+		temp_dot1.y_coord = seg * ycount + vars->render.margin;
 		temp_dot1.thick = 1;
 		if (line_data[i + 1])
 		{
 			temp_dot2.height = ft_atoi(line_data[i + 1]);
-			temp_dot2.x_coord = vars->render.seg_len * (i + 2) + vars->render.margin;
-			temp_dot2.y_coord = vars->render.seg_len * ycount + vars->render.margin;
+			temp_dot2.x_coord = seg * (i + 2) + vars->render.margin;
+			temp_dot2.y_coord = seg * ycount + vars->render.margin;
 		}
 		else
 			temp_dot2 = temp_dot1;
@@ -44,28 +46,29 @@ void	draw_y(t_vars *vars, char **line_data, char **prev_data, int ycount)
 	int		i;
 	t_dot	temp_dot1;
 	t_dot	temp_dot2;
+	float	seg;
 
 	i = 0;
+	seg = vars->render.seg_len;
 	temp_dot1.max_height = vars->max_height;
 	while (line_data && line_data[i] && ycount > 0)
 	{
-		vars->render.y_factor =  ft_sqrt(1 - vars->render.x_factor * vars->render.x_factor);
+		vars->render.y_factor = ft_sqrt(1 - vars->render.x_factor * vars->render.x_factor);
 		temp_dot1.height = ft_atoi(line_data[i]);
-		temp_dot1.x_coord = vars->render.seg_len * (i + 1) + vars->render.margin;
-		temp_dot1.y_coord = vars->render.seg_len * ycount + vars->render.margin;
+		temp_dot1.x_coord = seg * (i + 1) + vars->render.margin;
+		temp_dot1.y_coord = seg * ycount + vars->render.margin;
 		temp_dot1.thick = 1;
-		temp_dot2 = *iso_coord(&temp_dot1, *vars);;
+		temp_dot2 = *iso_coord(&temp_dot1, *vars);
 		if (prev_data[i])
 		{
 			temp_dot2.height = ft_atoi(prev_data[i]);
-			temp_dot2.x_coord += vars->render.seg_len * vars->render.x_factor * vars->render.bar_rot;
-			temp_dot2.y_coord -= vars->render.seg_len * vars->render.y_factor + vars->render.height * vars->render.x_factor * (temp_dot2.height - temp_dot1.height);
+			temp_dot2.x_coord += seg * vars->render.x_factor * vars->render.bar_rot;
+			temp_dot2.y_coord -= seg * vars->render.y_factor + vars->render.height * vars->render.x_factor * (temp_dot2.height - temp_dot1.height);
 		}
 		ft_draw_line(*vars, temp_dot2, temp_dot1);
 		i++;
 	}
 }
-
 
 void	ft_draw_grid(int fd, t_vars *vars)
 {
@@ -97,8 +100,9 @@ void	ft_draw_grid(int fd, t_vars *vars)
 int	ft_render(t_vars *vars)
 {
 	int	i;
-	int fd = open(vars->img.img_name, O_RDONLY);
+	int	fd;
 
+	fd = open(vars->img.img_name, O_RDONLY);
 	if (!vars->is_drawn)
 	{
 		i = 0;
@@ -112,9 +116,9 @@ int	ft_render(t_vars *vars)
 
 int	main(int argc, char **argv)
 {
-	(void) argc;
 	t_vars	vars;
 
+	(void)argc;
 	vars.mlx = mlx_init();
 	vars.img.img_name = argv[1];
 	vars.render.win_width = 1920;
@@ -125,12 +129,10 @@ int	main(int argc, char **argv)
 	vars.max_height = 10;
 	vars.render.x_factor = 0.866;
 	vars.render.bar_rot = 1;
-	//vars.render.disc_rot = 0;
 	vars.render.zoom = 0;
 	vars.render.height = 4;
 	mlx_hook(vars.win, 2, 0, ft_key_handle, &vars);
 	mlx_hook(vars.win, 4, 0, ft_buttonp_handle, &vars);
-	//mlx_hook(vars.win, 6, 0, ft_button_handle, &vars);
 	mlx_loop_hook(vars.mlx, ft_render, &vars);
 	mlx_loop(vars.mlx);
 }

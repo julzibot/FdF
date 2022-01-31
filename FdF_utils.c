@@ -6,7 +6,7 @@
 /*   By: jibot <marvin@42.fr>                       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/13 21:48:09 by jibot             #+#    #+#             */
-/*   Updated: 2022/01/13 22:02:42 by jibot            ###   ########.fr       */
+/*   Updated: 2022/01/21 18:00:26 by jibot            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@ float	ft_max(float a, float b)
 
 int	ft_tablen(char **tab)
 {
-	int i;
+	int	i;
 
 	i = 0;
 	while (tab[i])
