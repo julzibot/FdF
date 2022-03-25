@@ -6,7 +6,7 @@
 /*   By: jibot <marvin@42.fr>                       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/01/18 17:39:13 by jibot             #+#    #+#             */
-/*   Updated: 2022/01/21 18:30:01 by jibot            ###   ########.fr       */
+/*   Updated: 2022/03/24 16:41:33 by jibot            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ int	ft_height_handle(int keycode, t_vars *vars)
 	return (keycode);
 }
 
-int	ft_key_handle(int keycode, t_vars *vars)
+int	ft_key_bonus_handle(int keycode, t_vars *vars)
 {
 	if (keycode == 0 || keycode == 2)
 		vars->move_h -= (keycode - 1) * (vars->render.win_width / 300);
@@ -43,7 +43,10 @@ int	ft_key_handle(int keycode, t_vars *vars)
 	else if (keycode == 1)
 		vars->move_v -= (vars->render.win_height / 200);
 	else if (keycode == 53)
-		mlx_destroy_window(vars->mlx, vars->win);
+	{
+		ft_set_black(vars);
+		exit(0);
+	}
 	else if (keycode == 30)
 		vars->render.x_factor += 0.003;
 	else if (keycode == 33)
@@ -55,6 +58,16 @@ int	ft_key_handle(int keycode, t_vars *vars)
 	else
 		ft_height_handle(keycode, vars);
 	vars->is_drawn = 0;
+	return (keycode);
+}
+
+int	ft_key_handle(int keycode, t_vars *vars)
+{
+	if (keycode == 53)
+	{
+		ft_set_black(vars);
+		exit(0);
+	}
 	return (keycode);
 }
 

@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   FdF.c                                              :+:      :+:    :+:   */
+/*   FdF_bonus.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: jibot <marvin@42.fr>                       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/30 13:35:32 by jibot             #+#    #+#             */
-/*   Updated: 2022/03/25 16:41:53 by jibot            ###   ########.fr       */
+/*   Updated: 2022/03/25 16:41:20 by jibot            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,10 +66,10 @@ int	main(int argc, char **argv)
 	vars.render.bar_rot = 1;
 	vars.render.zoom = 0;
 	vars.render.height = 4;
-	mlx_hook(vars.win, 2, 0, ft_key_handle, &vars);
+	mlx_hook(vars.win, 2, 0, ft_key_bonus_handle, &vars);
+	mlx_hook(vars.win, 4, 0, ft_buttonp_handle, &vars);
 	if (!ft_render(&vars))
 		return (2);
 	mlx_loop_hook(vars.mlx, ft_render, &vars);
 	mlx_loop(vars.mlx);
-	return (0);
 }

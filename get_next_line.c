@@ -6,7 +6,7 @@
 /*   By: jibot <marvin@42.fr>                       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/14 16:20:05 by jibot             #+#    #+#             */
-/*   Updated: 2021/11/25 13:15:48 by jibot            ###   ########.fr       */
+/*   Updated: 2022/03/25 16:18:30 by jibot            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 #include "get_next_line.h"
@@ -67,7 +67,7 @@ char	*line_cut(char *line, char *buffer)
 	int	blen;
 
 	i = is_line(line);
-	blen = ft_strlen(line);
+	blen = get_strlen(line);
 	if ((i && line[blen - 1] != '\n') || (buffer[0] == '\n' && blen > 1)
 		|| (line[blen - 1] == '\n' && i < blen - 1 && blen > 1))
 		line[i + 1] = '\0';
@@ -93,7 +93,7 @@ char	*get_next_line(int fd)
 		line = get_full_line(ft_strdup(buffer), fd);
 	free(save);
 	i = is_line(line);
-	blen = ft_strlen(line);
+	blen = get_strlen(line);
 	if ((i && line[blen - 1] != '\n') || (buffer[0] == '\n' && blen > 1)
 		|| (line[blen - 1] == '\n' && i < blen - 1 && blen > 1))
 		save = ft_strdup(line + i + 1);
